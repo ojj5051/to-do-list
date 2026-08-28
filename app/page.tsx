@@ -10,6 +10,7 @@ import TodoCalendar from "./components/TodoCalender";
 import TodoForm from "./components/TodoForm";
 import TodoDnd from "./components/TodoDnd";
 import { useTodos } from "./hooks/useTodos";
+import TodoExport from "./components/TodoExport";
 
 export default function Home() {
   const {
@@ -196,6 +197,8 @@ export default function Home() {
             setSortOrder={setSortOrder}
           />
         </TodoDnd>
+
+        <TodoExport todos={todos} />
 
         <TodoPagination
           page={page}

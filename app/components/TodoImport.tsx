@@ -61,6 +61,15 @@ export default function TodoImport({ onImport }: TodoImportProps) {
               row.dueDate ?? row["Due Date"] ?? row["due_date"] ?? "",
             );
 
+            const completed = String(
+              row.completed ?? row.Completed ?? row.status ?? row.Status ?? "",
+            )
+              .trim()
+              .toLowerCase();
+
+            const isCompleted =
+              completed === "completed" || completed === "true";
+
             if (!title || !dueDate || !category) {
               return null;
             }
@@ -70,7 +79,7 @@ export default function TodoImport({ onImport }: TodoImportProps) {
               title,
               category: category || "Personal",
               dueDate,
-              completed: false,
+              completed: isCompleted,
             };
           })
           .filter((todo): todo is Todo => todo !== null);
@@ -96,7 +105,6 @@ export default function TodoImport({ onImport }: TodoImportProps) {
   const parseDate = (value: unknown): string => {
     if (!value) return "";
 
-    // Excel serial date
     if (typeof value === "number") {
       const date = XLSX.SSF.parse_date_code(value);
 
