@@ -83,9 +83,9 @@ todo-app/
 
 ### Prerequisites
 
-Make sure you have installed:
+Node Version
 
-* Node.js 18+
+* Node.js 24+
 * npm, yarn, pnpm, or bun
 
 ### Installation
