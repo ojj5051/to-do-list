@@ -1,226 +1,243 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  Select,
-  TextField,
-  Typography,
-  MenuItem,
-} from "@mui/material";
-
-import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
+import { useEffect, useMemo, useState } from "react";
+import { Box, Container, Paper, Typography } from "@mui/material";
 
 import TodoItem from "./components/TodoItem";
-import { toast } from "sonner";
-
-type Todo = {
-  id: number;
-  title: string;
-  completed: boolean;
-  category: string;
-  dueDate: string;
-};
-
-const categories = ["Work", "Personal", "Urgent"];
+import TodoFilter from "./components/TodoFilter";
+import TodoPagination from "./components/TodoPagination";
+import TodoCalendar from "./components/TodoCalender";
+import TodoForm from "./components/TodoForm";
+import TodoDnd from "./components/TodoDnd";
+import { useTodos } from "./hooks/useTodos";
 
 export default function Home() {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const {
+    todos,
+    setTodos,
+    categories,
+    addTodo,
+    deleteTodo,
+    toggleTodo,
+    updateTodo,
+    importTodos,
+  } = useTodos();
 
-  const [title, setTitle] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [category, setCategory] = useState("");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [filters, setFilters] = useState({
+    task: "",
+    category: "all",
+    dateFrom: "",
+    dateTo: "",
+    completed: "all",
+  });
 
-  const addTodo = () => {
-    if (!title || !dueDate || !category) {
-      toast.error("Please fill in the title, category and due date");
-      return;
-    }
-
-    const newTodo: Todo = {
-      id: Date.now(),
-      title,
-      completed: false,
-      category,
-      dueDate,
-    };
-
-    setTodos((currentTodos) => [...currentTodos, newTodo]);
-    setTitle("");
-    setDueDate("");
-  };
-
-  const toggleTodo = (id: number) => {
-    setTodos((currentTodos) =>
-      currentTodos.map((todo) => {
-        if (todo.id !== id) {
-          return todo;
-        }
-
-        return {
-          ...todo,
-          completed: !todo.completed,
-        };
-      }),
-    );
-  };
-
-  const deleteTodo = (id: number) => {
-    setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      addTodo();
-    }
-  };
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "manual">(
+    "manual",
+  );
 
   const remainingTodos = todos.filter((todo) => !todo.completed).length;
 
+  // Filtering
+  const filteredTodos = useMemo(() => {
+    return todos.filter((todo) => {
+      if (
+        filters.task &&
+        !todo.title.toLowerCase().includes(filters.task.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (filters.category !== "all" && todo.category !== filters.category) {
+        return false;
+      }
+
+      if (
+        filters.dateFrom &&
+        (!todo.dueDate || todo.dueDate < filters.dateFrom)
+      ) {
+        return false;
+      }
+
+      if (filters.dateTo && (!todo.dueDate || todo.dueDate > filters.dateTo)) {
+        return false;
+      }
+
+      if (filters.completed !== "all") {
+        const completed = filters.completed === "completed";
+
+        if (todo.completed !== completed) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [todos, filters]);
+
+  // Sorting
   const sortedTodos = useMemo(() => {
-    return [...todos].sort((a, b) => {
-      if (!a.dueDate && !b.dueDate) return 0;
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
+    const result = [...filteredTodos];
+
+    if (sortOrder === "manual") {
+      return result;
+    }
+
+    return result.sort((a, b) => {
+      if (!a.dueDate && !b.dueDate) {
+        return 0;
+      }
+
+      if (!a.dueDate) {
+        return 1;
+      }
+
+      if (!b.dueDate) {
+        return -1;
+      }
 
       const dateA = new Date(a.dueDate).getTime();
+
       const dateB = new Date(b.dueDate).getTime();
 
       return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
     });
-  }, [todos, sortOrder]);
+  }, [filteredTodos, sortOrder]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredTodos.length / rowsPerPage);
+
+  const paginatedTodos = useMemo(() => {
+    const startIndex = (page - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+
+    return sortedTodos.slice(startIndex, endIndex);
+  }, [sortedTodos, page, rowsPerPage]);
+
+  const clearFilters = () => {
+    setFilters({
+      task: "",
+      category: "all",
+      dateFrom: "",
+      dateTo: "",
+      completed: "all",
+    });
+  };
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters, rowsPerPage]);
 
   return (
     <Container
       maxWidth="md"
       sx={{
         minHeight: "100vh",
-        py: 6,
+        py: { xs: 4, md: 6 },
       }}
     >
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography
           variant="h4"
           sx={{
             fontWeight: 700,
-            mb: 1,
+            letterSpacing: "-0.5px",
+            mb: 0.5,
           }}
         >
           Todo List
         </Typography>
+      </Box>
 
+      <Paper
+        elevation={0}
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 3,
+          overflow: "hidden",
+        }}
+      >
+        <TodoForm addTodo={addTodo} importTodos={importTodos} />
+
+        <Box
+          sx={{
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        />
+
+        <TodoFilter
+          filters={filters}
+          categories={categories}
+          sortOrder={sortOrder}
+          setFilters={setFilters}
+          setSortOrder={setSortOrder}
+          clearFilters={clearFilters}
+        />
+
+        <Box
+          sx={{
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        />
+
+        <TodoDnd>
+          <TodoItem
+            todos={paginatedTodos}
+            setTodos={setTodos}
+            deleteTodo={deleteTodo}
+            toggleTodo={toggleTodo}
+            updateTodo={updateTodo}
+            categories={categories}
+            setSortOrder={setSortOrder}
+          />
+        </TodoDnd>
+
+        <TodoPagination
+          page={page}
+          totalPages={totalPages}
+          rowsPerPage={rowsPerPage}
+          totalItems={filteredTodos.length}
+          setPage={setPage}
+          setRowsPerPage={setRowsPerPage}
+        />
+      </Paper>
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mt: 2,
+          px: 1,
+        }}
+      >
         <Typography
-          variant="body1"
+          variant="body2"
           sx={{
             color: "text.secondary",
           }}
         >
-          Keep track of your tasks
+          {remainingTodos} {remainingTodos === 1 ? "task" : "tasks"} remaining
         </Typography>
-      </Box>
 
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          borderRadius: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            gap: 1,
-            mb: 3,
-          }}
-        >
-          <TextField
-            fullWidth
-            size="small"
-            label="New task"
-            placeholder="Enter a task..."
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-
-          <Select
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            displayEmpty
-            fullWidth
-            size="small"
-          >
-            <MenuItem value="">Select category</MenuItem>
-
-            {categories.map((item) => (
-              <MenuItem key={item} value={item}>
-                {item}
-              </MenuItem>
-            ))}
-          </Select>
-
-          <TextField
-            type="date"
-            fullWidth
-            size="small"
-            value={dueDate}
-            onChange={(event) => setDueDate(event.target.value)}
-          />
-
-          <Button
-            variant="contained"
-            onClick={addTodo}
+        {filteredTodos.length !== todos.length && (
+          <Typography
+            variant="body2"
             sx={{
-              px: 3,
-              flexShrink: 0,
+              color: "text.secondary",
             }}
           >
-            Add
-          </Button>
-        </Box>
+            Showing {filteredTodos.length} of {todos.length}
+          </Typography>
+        )}
+      </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            mb: 2,
-          }}
-        >
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={
-              sortOrder === "asc" ? <ArrowUpward /> : <ArrowDownward />
-            }
-            onClick={() =>
-              setSortOrder((current) => (current === "asc" ? "desc" : "asc"))
-            }
-          >
-            {sortOrder === "asc" ? "Earliest" : "Latest"}
-          </Button>
-        </Box>
-
-        <TodoItem
-          todos={sortedTodos}
-          toggleTodo={toggleTodo}
-          deleteTodo={deleteTodo}
-        />
-      </Paper>
-
-      <Typography
-        variant="body2"
-        sx={{
-          mt: 2,
-          color: "text.secondary",
-        }}
-      >
-        {remainingTodos} {remainingTodos === 1 ? "task" : "tasks"} remaining
-      </Typography>
+      <TodoCalendar todos={todos} />
     </Container>
   );
 }
