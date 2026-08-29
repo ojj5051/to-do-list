@@ -3,13 +3,11 @@
 import {
   Box,
   FormControl,
-  InputLabel,
   MenuItem,
   Pagination,
   Select,
   Typography,
 } from "@mui/material";
-import { useEffect } from "react";
 
 interface TodoPaginationProps {
   page: number;
@@ -31,12 +29,6 @@ export default function TodoPagination({
   if (totalItems === 0) {
     return null;
   }
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(Math.max(1, totalPages));
-    }
-  }, [page, totalPages]);
 
   return (
     <Box

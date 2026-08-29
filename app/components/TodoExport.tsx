@@ -18,10 +18,6 @@ interface TodoExportProps {
 
 export default function TodoExport({ todos }: TodoExportProps) {
   const exportTodos = () => {
-    if (todos.length === 0) {
-      return;
-    }
-
     const data = todos.map((todo) => ({
       Task: todo.title,
       Category: todo.category,
@@ -38,6 +34,10 @@ export default function TodoExport({ todos }: TodoExportProps) {
     XLSX.writeFile(workbook, "todo-list.xlsx");
   };
 
+  if(todos.length === 0){
+    return null;
+  }
+
   return (
     <Box
       sx={{
@@ -53,7 +53,6 @@ export default function TodoExport({ todos }: TodoExportProps) {
         variant="outlined"
         startIcon={<DownloadIcon />}
         onClick={exportTodos}
-        disabled={todos.length === 0}
       >
         Export Excel
       </Button>

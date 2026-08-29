@@ -127,9 +127,17 @@ export default function Home() {
     });
   };
 
+  // Reset page to 1 when filters change
   useEffect(() => {
     setPage(1);
   }, [filters, rowsPerPage]);
+
+  // Set page to previous page if totalPages is less than current page
+  useEffect(() => {
+    if (page > totalPages && totalPages > 0) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   return (
     <Container
