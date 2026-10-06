@@ -14,37 +14,33 @@ import {
 import TodoImport from "./TodoImport";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTodos } from "../hooks/useTodos";
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  dueDate: string;
-  completed: boolean;
-  order: number;
-};
+import { categories, getSubCategories, type Todo } from "../types/todo";
 
 interface TodoFormProps {
-  addTodo: (title: string, category: string, dueDate: string) => void;
+  addTodo: (
+    title: string,
+    category: string,
+    subCategory: string,
+    dueDate: string,
+  ) => void;
   importTodos: (todos: Todo[]) => void;
 }
-
-const categories = ["Work", "Personal", "Urgent"];
 
 export default function TodoForm({ addTodo, importTodos }: TodoFormProps) {
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [category, setCategory] = useState("");
+  const [subCategory, setSubCategory] = useState("");
 
   const handleAddTodo = () => {
     if (!title || !dueDate || !category) {
       toast.error("Please fill in the title, category and due date");
       return;
     }
-    addTodo(title, category, dueDate);
+    addTodo(title, category, subCategory, dueDate);
     setTitle("");
     setCategory("");
+    setSubCategory("");
     setDueDate("");
   };
 
@@ -70,7 +66,7 @@ export default function TodoForm({ addTodo, importTodos }: TodoFormProps) {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            sm: "2fr 1.2fr 1.2fr 1.2fr auto",
+            sm: "2fr 1.2fr 1.2fr 1.2fr 1.2fr auto",
           },
           gap: 1.5,
           alignItems: "center",
@@ -90,13 +86,36 @@ export default function TodoForm({ addTodo, importTodos }: TodoFormProps) {
           <Select
             value={category}
             label="Category"
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(event) => {
+              setCategory(event.target.value);
+              setSubCategory("");
+            }}
           >
             <MenuItem value="" disabled>
               Select category
             </MenuItem>
 
             {categories.map((item) => (
+              <MenuItem key={item} value={item}>
+                {item}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>Sub-Category</InputLabel>
+
+          <Select
+            value={subCategory}
+            label="Sub-Category"
+            onChange={(event) => setSubCategory(event.target.value)}
+          >
+            <MenuItem value="" disabled>
+              Select sub-category
+            </MenuItem>
+
+            {getSubCategories(category).map((item) => (
               <MenuItem key={item} value={item}>
                 {item}
               </MenuItem>

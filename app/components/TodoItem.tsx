@@ -1,16 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { List } from "@mui/material";
+import { List, Typography } from "@mui/material";
 import TodoDraggableItem from "./TodoDraggableItem";
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  dueDate: string;
-  completed: boolean;
-};
+import type { Todo } from "../types/todo";
 
 interface TodoItemProps {
   todos: Todo[];
@@ -35,12 +28,14 @@ export default function TodoItem({
 
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState("");
+  const [editSubCategory, setEditSubCategory] = useState("");
   const [editDueDate, setEditDueDate] = useState("");
 
   const startEditing = (todo: Todo) => {
     setEditingId(todo.id);
     setEditTitle(todo.title);
     setEditCategory(todo.category);
+    setEditSubCategory(todo.subCategory);
     setEditDueDate(todo.dueDate);
   };
 
@@ -48,6 +43,7 @@ export default function TodoItem({
     setEditingId(null);
     setEditTitle("");
     setEditCategory("");
+    setEditSubCategory("");
     setEditDueDate("");
   };
 
@@ -60,6 +56,7 @@ export default function TodoItem({
       ...todo,
       title: editTitle.trim(),
       category: editCategory,
+      subCategory: editSubCategory,
       dueDate: editDueDate,
     });
 
@@ -93,32 +90,40 @@ export default function TodoItem({
 
   return (
     <List disablePadding>
-      {todos.map((todo, index) => {
-        const isEditing = editingId === todo.id;
+      {todos.length === 0 ? (
+        <Typography sx={{ textAlign: "center", my: 2 }}>
+          No tasks yet
+        </Typography>
+      ) : (
+        todos.map((todo, index) => {
+          const isEditing = editingId === todo.id;
 
-        return (
-          <TodoDraggableItem
-            key={todo.id}
-            todo={todo}
-            index={index}
-            isEditing={isEditing}
-            categories={categories}
-            toggleTodo={toggleTodo}
-            deleteTodo={deleteTodo}
-            startEditing={startEditing}
-            saveEditing={saveEditing}
-            cancelEditing={cancelEditing}
-            editTitle={editTitle}
-            editCategory={editCategory}
-            editDueDate={editDueDate}
-            setEditTitle={setEditTitle}
-            setEditCategory={setEditCategory}
-            setEditDueDate={setEditDueDate}
-            moveTodo={reorderTodos}
-            onDragStart={() => {}}
-          />
-        );
-      })}
+          return (
+            <TodoDraggableItem
+              key={todo.id}
+              todo={todo}
+              index={index}
+              isEditing={isEditing}
+              categories={categories}
+              toggleTodo={toggleTodo}
+              deleteTodo={deleteTodo}
+              startEditing={startEditing}
+              saveEditing={saveEditing}
+              cancelEditing={cancelEditing}
+              editTitle={editTitle}
+              editCategory={editCategory}
+              editSubCategory={editSubCategory}
+              editDueDate={editDueDate}
+              setEditTitle={setEditTitle}
+              setEditCategory={setEditCategory}
+              setEditSubCategory={setEditSubCategory}
+              setEditDueDate={setEditDueDate}
+              moveTodo={reorderTodos}
+              onDragStart={() => {}}
+            />
+          );
+        })
+      )}
     </List>
   );
 }

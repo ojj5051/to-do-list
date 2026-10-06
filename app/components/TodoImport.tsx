@@ -7,14 +7,7 @@ import { UploadFile } from "@mui/icons-material";
 
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  dueDate: string;
-  completed: boolean;
-};
+import type { Todo } from "../types/todo";
 
 interface TodoImportProps {
   onImport: (todos: Todo[]) => void;
@@ -57,6 +50,14 @@ export default function TodoImport({ onImport }: TodoImportProps) {
 
             const category = String(row.category ?? row.Category ?? "").trim();
 
+            const subCategory = String(
+              row.subCategory ??
+                row["Sub-Category"] ??
+                row["Sub Category"] ??
+                row.Subcategory ??
+                "",
+            ).trim();
+
             const dueDate = parseDate(
               row.dueDate ?? row["Due Date"] ?? row["due_date"] ?? "",
             );
@@ -78,6 +79,7 @@ export default function TodoImport({ onImport }: TodoImportProps) {
               id: Date.now() + index,
               title,
               category: category || "Personal",
+              subCategory,
               dueDate,
               completed: isCompleted,
             };

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   Box,
@@ -13,21 +13,14 @@ import {
   Typography,
 } from "@mui/material";
 
-import { Close, Delete, DragIndicator, Edit, Save } from "@mui/icons-material";
+import { Close, Delete, Edit, Save } from "@mui/icons-material";
 
 import { useDrag, useDrop } from "react-dnd";
+import { getSubCategories, type Todo } from "../types/todo";
 
 type DragItem = {
   id: number;
   index: number;
-};
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  dueDate: string;
-  completed: boolean;
 };
 
 interface TodoDraggableItemProps {
@@ -44,10 +37,12 @@ interface TodoDraggableItemProps {
 
   editTitle: string;
   editCategory: string;
+  editSubCategory: string;
   editDueDate: string;
 
   setEditTitle: (value: string) => void;
   setEditCategory: (value: string) => void;
+  setEditSubCategory: (value: string) => void;
   setEditDueDate: (value: string) => void;
 
   moveTodo: (draggedId: number, targetId: number) => void;
@@ -66,9 +61,11 @@ export default function TodoDraggableItem({
   cancelEditing,
   editTitle,
   editCategory,
+  editSubCategory,
   editDueDate,
   setEditTitle,
   setEditCategory,
+  setEditSubCategory,
   setEditDueDate,
   moveTodo,
   onDragStart,
@@ -130,7 +127,9 @@ export default function TodoDraggableItem({
     },
   });
 
-  drag(drop(ref));
+  useEffect(() => {
+    drag(drop(ref));
+  }, [drag, drop]);
 
   return (
     <ListItem
@@ -155,7 +154,7 @@ export default function TodoDraggableItem({
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              sm: "2fr 1fr 1fr auto",
+              sm: "2fr 1fr 1fr 1fr auto",
             },
             gap: 1,
             width: "100%",
@@ -177,11 +176,34 @@ export default function TodoDraggableItem({
             <Select
               value={editCategory}
               label="Category"
-              onChange={(event) => setEditCategory(event.target.value)}
+              onChange={(event) => {
+                setEditCategory(event.target.value);
+                setEditSubCategory("");
+              }}
             >
               {categories.map((category) => (
                 <MenuItem key={category} value={category}>
                   {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" fullWidth>
+            <InputLabel>Sub-Category</InputLabel>
+
+            <Select
+              value={editSubCategory}
+              label="Sub-Category"
+              onChange={(event) => setEditSubCategory(event.target.value)}
+            >
+              <MenuItem value="" disabled>
+                Select sub-category
+              </MenuItem>
+
+              {getSubCategories(editCategory).map((item) => (
+                <MenuItem key={item} value={item}>
+                  {item}
                 </MenuItem>
               ))}
             </Select>
@@ -264,6 +286,20 @@ export default function TodoDraggableItem({
               >
                 {todo.category}
               </Typography>
+
+              {todo.subCategory.trim() !== "" && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    backgroundColor: "action.hover",
+                  }}
+                >
+                  {todo.subCategory}
+                </Typography>
+              )}
 
               {todo.dueDate && (
                 <Typography variant="caption" color="text.secondary">
