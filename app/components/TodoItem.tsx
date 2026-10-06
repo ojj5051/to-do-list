@@ -3,15 +3,7 @@
 import { useState } from "react";
 import { List, Typography } from "@mui/material";
 import TodoDraggableItem from "./TodoDraggableItem";
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  subCategory: string;
-  dueDate: string;
-  completed: boolean;
-};
+import type { Todo } from "../types/todo";
 
 interface TodoItemProps {
   todos: Todo[];
@@ -20,9 +12,6 @@ interface TodoItemProps {
   updateTodo: (updatedTodo: Todo) => void;
   deleteTodo: (id: number) => void;
   categories: string[];
-  subWorkCategories: string[];
-  subPersonalCategories: string[];
-  subUrgentCategories: string[];
   setSortOrder: (order: "asc" | "desc" | "manual") => void;
 }
 
@@ -33,9 +22,6 @@ export default function TodoItem({
   toggleTodo,
   updateTodo,
   categories,
-  subWorkCategories,
-  subPersonalCategories,
-  subUrgentCategories,
   setSortOrder,
 }: TodoItemProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -119,9 +105,6 @@ export default function TodoItem({
               index={index}
               isEditing={isEditing}
               categories={categories}
-              subWorkCategories={subWorkCategories}
-              subPersonalCategories={subPersonalCategories}
-              subUrgentCategories={subUrgentCategories}
               toggleTodo={toggleTodo}
               deleteTodo={deleteTodo}
               startEditing={startEditing}

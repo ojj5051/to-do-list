@@ -14,17 +14,7 @@ import {
 import TodoImport from "./TodoImport";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTodos } from "../hooks/useTodos";
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  subCategory: string;
-  dueDate: string;
-  completed: boolean;
-  order: number;
-};
+import { categories, getSubCategories, type Todo } from "../types/todo";
 
 interface TodoFormProps {
   addTodo: (
@@ -35,11 +25,6 @@ interface TodoFormProps {
   ) => void;
   importTodos: (todos: Todo[]) => void;
 }
-
-const categories = ["Work", "Personal", "Urgent"];
-const subWorkCategories = ["Cleaning", "Cooking"];
-const subPersonalCategories = ["Exercise", "Learning"];
-const subUrgentCategories = ["Call", "Meeting"];
 
 export default function TodoForm({ addTodo, importTodos }: TodoFormProps) {
   const [title, setTitle] = useState("");
@@ -101,7 +86,10 @@ export default function TodoForm({ addTodo, importTodos }: TodoFormProps) {
           <Select
             value={category}
             label="Category"
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(event) => {
+              setCategory(event.target.value);
+              setSubCategory("");
+            }}
           >
             <MenuItem value="" disabled>
               Select category
@@ -127,30 +115,11 @@ export default function TodoForm({ addTodo, importTodos }: TodoFormProps) {
               Select sub-category
             </MenuItem>
 
-            {(() => {
-              switch (category) {
-                case "Work":
-                  return subWorkCategories.map((item) => (
-                    <MenuItem key={item} value={item}>
-                      {item}
-                    </MenuItem>
-                  ));
-                case "Personal":
-                  return subPersonalCategories.map((item) => (
-                    <MenuItem key={item} value={item}>
-                      {item}
-                    </MenuItem>
-                  ));
-                case "Urgent":
-                  return subUrgentCategories.map((item) => (
-                    <MenuItem key={item} value={item}>
-                      {item}
-                    </MenuItem>
-                  ));
-                default:
-                  return null;
-              }
-            })()}
+            {getSubCategories(category).map((item) => (
+              <MenuItem key={item} value={item}>
+                {item}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
 

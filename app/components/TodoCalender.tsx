@@ -1,24 +1,28 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
+import {
+  Calendar,
+  dateFnsLocalizer,
+  type Event as CalendarEventBase,
+  type View,
+} from "react-big-calendar";
 
 import { format, parse, startOfWeek, getDay } from "date-fns";
 
-import enUS from "date-fns/locale/en-US";
+import { enUS } from "date-fns/locale/en-US";
 
 import { Box, Chip, IconButton, Typography } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import type { Todo } from "../types/todo";
 
-type Todo = {
+interface CalendarEvent extends CalendarEventBase {
   id: number;
-  title: string;
   category: string;
-  dueDate: string;
   completed: boolean;
-};
+}
 
 interface TodoCalendarProps {
   todos: Todo[];
@@ -51,17 +55,17 @@ export default function TodoCalendar({ todos }: TodoCalendarProps) {
   const [date, setDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const events = useMemo(() => {
+  const events = useMemo<CalendarEvent[]>(() => {
     return todos
       .filter((todo) => todo.dueDate)
       .map((todo) => {
-        const date = new Date(`${todo.dueDate}T00:00:00`);
+        const due = new Date(`${todo.dueDate}T00:00:00`);
 
         return {
           id: todo.id,
           title: todo.title,
-          start: date,
-          end: date,
+          start: due,
+          end: due,
           allDay: true,
           category: todo.category,
           completed: todo.completed,
@@ -139,7 +143,7 @@ export default function TodoCalendar({ todos }: TodoCalendarProps) {
               height: 650,
             }}
           >
-            <Calendar
+            <Calendar<CalendarEvent>
               localizer={localizer}
               events={events}
               view={view}

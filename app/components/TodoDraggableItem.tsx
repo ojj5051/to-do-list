@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   Box,
@@ -13,22 +13,14 @@ import {
   Typography,
 } from "@mui/material";
 
-import { Close, Delete, DragIndicator, Edit, Save } from "@mui/icons-material";
+import { Close, Delete, Edit, Save } from "@mui/icons-material";
 
 import { useDrag, useDrop } from "react-dnd";
+import { getSubCategories, type Todo } from "../types/todo";
 
 type DragItem = {
   id: number;
   index: number;
-};
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  subCategory: string;
-  dueDate: string;
-  completed: boolean;
 };
 
 interface TodoDraggableItemProps {
@@ -36,10 +28,7 @@ interface TodoDraggableItemProps {
   index: number;
   isEditing: boolean;
   categories: string[];
-  subWorkCategories: string[];
-  subPersonalCategories: string[];
-  subUrgentCategories: string[];
-  
+
   toggleTodo: (id: number) => void;
   deleteTodo: (id: number) => void;
   startEditing: (todo: Todo) => void;
@@ -65,9 +54,6 @@ export default function TodoDraggableItem({
   index,
   isEditing,
   categories,
-  subWorkCategories,
-  subPersonalCategories,
-  subUrgentCategories,
   toggleTodo,
   deleteTodo,
   startEditing,
@@ -141,7 +127,9 @@ export default function TodoDraggableItem({
     },
   });
 
-  drag(drop(ref));
+  useEffect(() => {
+    drag(drop(ref));
+  }, [drag, drop]);
 
   return (
     <ListItem
@@ -188,7 +176,10 @@ export default function TodoDraggableItem({
             <Select
               value={editCategory}
               label="Category"
-              onChange={(event) => setEditCategory(event.target.value)}
+              onChange={(event) => {
+                setEditCategory(event.target.value);
+                setEditSubCategory("");
+              }}
             >
               {categories.map((category) => (
                 <MenuItem key={category} value={category}>
@@ -210,30 +201,11 @@ export default function TodoDraggableItem({
                 Select sub-category
               </MenuItem>
 
-              {(() => {
-                switch (editCategory) {
-                  case "Work":
-                    return subWorkCategories.map((item) => (
-                      <MenuItem key={item} value={item}>
-                        {item}
-                      </MenuItem>
-                    ));
-                  case "Personal":
-                    return subPersonalCategories.map((item) => (
-                      <MenuItem key={item} value={item}>
-                        {item}
-                      </MenuItem>
-                    ));
-                  case "Urgent":
-                    return subUrgentCategories.map((item) => (
-                      <MenuItem key={item} value={item}>
-                        {item}
-                      </MenuItem>
-                    ));
-                  default:
-                    return null;
-                }
-              })()}
+              {getSubCategories(editCategory).map((item) => (
+                <MenuItem key={item} value={item}>
+                  {item}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -315,17 +287,19 @@ export default function TodoDraggableItem({
                 {todo.category}
               </Typography>
 
-              <Typography
-                variant="caption"
-                sx={{
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 1,
-                  backgroundColor: "action.hover",
-                }}
-              >
-                {todo.subCategory}
-              </Typography>
+              {todo.subCategory.trim() !== "" && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 1,
+                    backgroundColor: "action.hover",
+                  }}
+                >
+                  {todo.subCategory}
+                </Typography>
+              )}
 
               {todo.dueDate && (
                 <Typography variant="caption" color="text.secondary">

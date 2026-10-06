@@ -3,14 +3,7 @@
 import { Box, Button } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import * as XLSX from "xlsx";
-
-type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  dueDate: string;
-  completed: boolean;
-};
+import type { Todo } from "../types/todo";
 
 interface TodoExportProps {
   todos: Todo[];
@@ -21,6 +14,7 @@ export default function TodoExport({ todos }: TodoExportProps) {
     const data = todos.map((todo) => ({
       Task: todo.title,
       Category: todo.category,
+      "Sub-Category": todo.subCategory,
       "Due Date": todo.dueDate || "",
       Status: todo.completed ? "Completed" : "Pending",
     }));

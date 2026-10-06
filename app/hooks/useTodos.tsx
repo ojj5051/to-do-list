@@ -1,43 +1,104 @@
-import { useEffect, useState } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+import { categories, type Todo } from "../types/todo";
 
-export type Todo = {
-  id: number;
-  title: string;
-  category: string;
-  subCategory: string;
-  dueDate: string;
-  completed: boolean;
-};
+export type { Todo };
 
-const categories = ["Work", "Personal", "Urgent"];
-const subWorkCategories = ["Cleaning", "Cooking"];
-const subPersonalCategories = ["Exercise", "Learning"];
-const subUrgentCategories = ["Call", "Meeting"];
+const STORAGE_KEY = "todos";
 
-export function useTodos() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+const listeners = new Set<() => void>();
+let cachedSnapshot = "[]";
 
-  useEffect(() => {
-    const storedTodos = localStorage.getItem("todos");
+function emitChange() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
 
-    if (storedTodos) {
-      try {
-        setTodos(JSON.parse(storedTodos));
-      } catch (error) {
-        console.error("Failed to parse stored todos:", error);
-      }
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function readStorage(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEY) ?? "[]";
+  } catch (error) {
+    console.error("Failed to read stored todos:", error);
+    return cachedSnapshot;
+  }
+}
+
+function getSnapshot(): string {
+  const next = readStorage();
+
+  if (next !== cachedSnapshot) {
+    cachedSnapshot = next;
+  }
+
+  return cachedSnapshot;
+}
+
+function getServerSnapshot(): string {
+  return "[]";
+}
+
+function normalizeTodo(value: unknown, index: number): Todo {
+  const todo =
+    value && typeof value === "object"
+      ? (value as Partial<Todo>)
+      : ({} as Partial<Todo>);
+
+  return {
+    id: typeof todo.id === "number" ? todo.id : Date.now() + index,
+    title: typeof todo.title === "string" ? todo.title : "",
+    category: typeof todo.category === "string" ? todo.category : "",
+    subCategory: typeof todo.subCategory === "string" ? todo.subCategory : "",
+    dueDate: typeof todo.dueDate === "string" ? todo.dueDate : "",
+    completed: Boolean(todo.completed),
+    ...(typeof todo.order === "number" ? { order: todo.order } : {}),
+  };
+}
+
+function parseTodos(raw: string): Todo[] {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      return [];
     }
 
-    setIsLoaded(true);
+    return parsed.map((item, index) => normalizeTodo(item, index));
+  } catch (error) {
+    console.error("Failed to parse stored todos:", error);
+    return [];
+  }
+}
+
+function writeTodos(next: Todo[]) {
+  const serialized = JSON.stringify(next);
+  cachedSnapshot = serialized;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, serialized);
+  } catch (error) {
+    console.error("Failed to save todos:", error);
+  }
+
+  emitChange();
+}
+
+export function useTodos() {
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const todos = useMemo(() => parseTodos(raw), [raw]);
+
+  const setTodos = useCallback((action: Todo[] | ((prev: Todo[]) => Todo[])) => {
+    const prev = parseTodos(getSnapshot());
+    const next = typeof action === "function" ? action(prev) : action;
+    writeTodos(next);
   }, []);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos, isLoaded]);
 
   const addTodo = (
     title: string,
@@ -97,8 +158,5 @@ export function useTodos() {
     updateTodo,
     importTodos,
     categories,
-    subWorkCategories,
-    subPersonalCategories,
-    subUrgentCategories,
   };
 }

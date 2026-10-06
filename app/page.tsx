@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, type SetStateAction } from "react";
 import { Box, Container, Paper, Typography } from "@mui/material";
 
 import TodoItem from "./components/TodoItem";
@@ -11,15 +11,13 @@ import TodoForm from "./components/TodoForm";
 import TodoDnd from "./components/TodoDnd";
 import { useTodos } from "./hooks/useTodos";
 import TodoExport from "./components/TodoExport";
+import type { TodoFilters } from "./components/TodoFilter";
 
 export default function Home() {
   const {
     todos,
     setTodos,
     categories,
-    subWorkCategories,
-    subPersonalCategories,
-    subUrgentCategories,
     addTodo,
     deleteTodo,
     toggleTodo,
@@ -28,15 +26,25 @@ export default function Home() {
   } = useTodos();
 
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPageState] = useState(5);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFiltersState] = useState<TodoFilters>({
     task: "",
     category: "all",
     dateFrom: "",
     dateTo: "",
     completed: "all",
   });
+
+  const setFilters = (action: SetStateAction<TodoFilters>) => {
+    setFiltersState(action);
+    setPage(1);
+  };
+
+  const setRowsPerPage = (rows: number) => {
+    setRowsPerPageState(rows);
+    setPage(1);
+  };
 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "manual">(
     "manual",
@@ -55,14 +63,6 @@ export default function Home() {
       }
 
       if (filters.category !== "all" && todo.category !== filters.category) {
-        return false;
-      }
-
-      if (
-        filters.dateFrom &&
-        !todo.dueDate.includes(filters.dateFrom) &&
-        !filters.dateTo
-      ) {
         return false;
       }
 
@@ -120,13 +120,14 @@ export default function Home() {
 
   // Pagination
   const totalPages = Math.ceil(filteredTodos.length / rowsPerPage);
+  const currentPage = totalPages > 0 ? Math.min(page, totalPages) : 1;
 
   const paginatedTodos = useMemo(() => {
-    const startIndex = (page - 1) * rowsPerPage;
+    const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
 
     return sortedTodos.slice(startIndex, endIndex);
-  }, [sortedTodos, page, rowsPerPage]);
+  }, [sortedTodos, currentPage, rowsPerPage]);
 
   const clearFilters = () => {
     setFilters({
@@ -137,18 +138,6 @@ export default function Home() {
       completed: "all",
     });
   };
-
-  // Reset page to 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [filters, rowsPerPage]);
-
-  // Set page to previous page if totalPages is less than current page
-  useEffect(() => {
-    if (page > totalPages && totalPages > 0) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
 
   return (
     <Container
@@ -214,16 +203,13 @@ export default function Home() {
             updateTodo={updateTodo}
             categories={categories}
             setSortOrder={setSortOrder}
-            subWorkCategories={subWorkCategories}
-            subPersonalCategories={subPersonalCategories}
-            subUrgentCategories={subUrgentCategories}
           />
         </TodoDnd>
 
         <TodoExport todos={todos} />
 
         <TodoPagination
-          page={page}
+          page={currentPage}
           totalPages={totalPages}
           rowsPerPage={rowsPerPage}
           totalItems={filteredTodos.length}
