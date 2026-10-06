@@ -26,9 +26,9 @@ export default function TodoPagination({
   setPage,
   setRowsPerPage,
 }: TodoPaginationProps) {
-  if (totalItems === 0) {
-    return null;
-  }
+  // if (totalItems === 0) {
+  //   return null;
+  // }
 
   return (
     <Box

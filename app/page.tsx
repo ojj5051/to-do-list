@@ -17,6 +17,9 @@ export default function Home() {
     todos,
     setTodos,
     categories,
+    subWorkCategories,
+    subPersonalCategories,
+    subUrgentCategories,
     addTodo,
     deleteTodo,
     toggleTodo,
@@ -52,6 +55,14 @@ export default function Home() {
       }
 
       if (filters.category !== "all" && todo.category !== filters.category) {
+        return false;
+      }
+
+      if (
+        filters.dateFrom &&
+        !todo.dueDate.includes(filters.dateFrom) &&
+        !filters.dateTo
+      ) {
         return false;
       }
 
@@ -203,6 +214,9 @@ export default function Home() {
             updateTodo={updateTodo}
             categories={categories}
             setSortOrder={setSortOrder}
+            subWorkCategories={subWorkCategories}
+            subPersonalCategories={subPersonalCategories}
+            subUrgentCategories={subUrgentCategories}
           />
         </TodoDnd>
 

@@ -5,11 +5,15 @@ export type Todo = {
   id: number;
   title: string;
   category: string;
+  subCategory: string;
   dueDate: string;
   completed: boolean;
 };
 
 const categories = ["Work", "Personal", "Urgent"];
+const subWorkCategories = ["Cleaning", "Cooking"];
+const subPersonalCategories = ["Exercise", "Learning"];
+const subUrgentCategories = ["Call", "Meeting"];
 
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -35,11 +39,17 @@ export function useTodos() {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos, isLoaded]);
 
-  const addTodo = (title: string, category: string, dueDate: string) => {
+  const addTodo = (
+    title: string,
+    category: string,
+    subCategory: string,
+    dueDate: string,
+  ) => {
     const newTodo: Todo = {
       id: Date.now(),
       title,
       category,
+      subCategory,
       dueDate,
       completed: false,
     };
@@ -87,5 +97,8 @@ export function useTodos() {
     updateTodo,
     importTodos,
     categories,
+    subWorkCategories,
+    subPersonalCategories,
+    subUrgentCategories,
   };
 }
